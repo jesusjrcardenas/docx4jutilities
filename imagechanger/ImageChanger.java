@@ -1,5 +1,6 @@
 package com.testing.demo.imagechanger;
 
+import org.docx4j.XmlUtils;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.openpackaging.parts.Part;
 import org.docx4j.openpackaging.parts.PartName;
@@ -13,6 +14,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 
 public class ImageChanger {
@@ -53,9 +55,23 @@ public class ImageChanger {
                     file.setWritable(true);
                     wordMLPackage.save(file);
                 }
-
-
             }
+
+
+            Object o = XmlUtils.unwrap(entry.getValue());
+            if (o instanceof org.docx4j.vml.CTRect){
+                System.out.println("es un recta");
+            }
+            if (o instanceof org.docx4j.vml.CTImageData) {
+                System.out.println("es una imagen");
+            }
+            if(o instanceof org.docx4j.vml.CTShapetype){
+                System.out.println("es una imagen shape type");
+            }
+
+
+
+
         }
     }
 
@@ -98,6 +114,48 @@ public class ImageChanger {
             bytes = new byte[0];
         }
         return bytes;
+    }
+
+    private java.util.List<String> getFiles(String documentsPath) {
+        final File folder = new File(documentsPath);
+
+        java.util.List<String> result = new ArrayList<>();
+
+        search(".*\\.docx", folder, result);
+
+        return result;
+    }
+
+    private static void search(final String pattern, final File folder, java.util.List<String> result) {
+        for (final File f : folder.listFiles()) {
+
+            if (f.isDirectory()) {
+                search(pattern, f, result);
+            }
+
+            if (f.isFile()) {
+                if (f.getName().matches(pattern)) {
+                    result.add(f.getAbsolutePath());
+                }
+            }
+        }
+    }
+
+    public void changeImagesInFolder(String documentsPath, String bufferpath) {
+        //1. get files list
+        java.util.List<String> filesPath = getFiles(documentsPath);
+
+        for (String filepath : filesPath) {
+
+            //2. open the file and change the image format
+            ImageChanger imageChanger = new ImageChanger();
+            try {
+                imageChanger.saveDocxImg(filepath, bufferpath);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
 
